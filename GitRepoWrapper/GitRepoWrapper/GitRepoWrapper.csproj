@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.28.0" />
+    <PackageReference Include="RangeTree" Version="3.0.1" />
   </ItemGroup>
 
 </Project>

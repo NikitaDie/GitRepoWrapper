@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using IntervalTree;
 
 namespace GitRepoWrapper
 {
@@ -24,6 +20,11 @@ namespace GitRepoWrapper
             J = j;
             Type = type;
         }
+
+        public override string ToString()
+        {
+            return $"{I}|{J}";
+        }
     }
 
     public enum EdgeType
@@ -35,32 +36,48 @@ namespace GitRepoWrapper
     public class Edge
     {
         public Node Source { get; set; }
-        Node target;
-        EdgeType type;
+        public Node Target { get; set; }
+        public EdgeType Type { get; set; }
+
+        public Edge(Node source, Node target, EdgeType type) 
+        { 
+            Source = source; 
+            Target = target; 
+            Type = type;
+        }
+
+        public override string ToString()
+        {
+            return $"{Source}, {Target}, {Type}";
+        }
     }
 
     public class CommitGraph
     {
-        public Dictionary<string, Node> positions;
-        private int width;
-        //private IntervalTree<Edge> edges;
+        public Dictionary<string, Node> Positions { get; set; }
+        //private int width;
+        public IntervalTree<int, Edge> Edges { get; set; }
 
         public CommitGraph()
         {
-            this.positions = new Dictionary<string, Node>();
-            this.width = 0;
-            //this.edges = new IntervalTree<Edge>();
+            this.Positions = new Dictionary<string, Node>();
+            //this.width = 0;
+            this.Edges = new IntervalTree<int, Edge>(); //TODO: unnecessary initialisation
         }
 
         public void ComputePositions(RepoWrapper repo)
         {
-            this.positions.Clear();
-            repo.Commits.ForEach(commit => positions[commit.Sha] = new Node(0, 0, NodeType.Commit)); //?
+            this.Positions.Clear();
+            repo.Commits.ForEach(commit => Positions[commit.Sha] = new Node(0, 0, NodeType.Commit)); //?
             string? headSha = repo.HeadCommit?.Sha; //const?
             int i = 0;
-            List<string?> branches = new List<string?>() {/* "index" */};
+            List<string?> branches = new List<string?>()
+            {
+                /* "index" */
+            };
             var activeNodes = new Dictionary<string, HashSet<int>>();
-            PriorityQueue<string, int> activeNodesQueue = new PriorityQueue<string, int>(Comparer<int>.Create((lhs, rhs) => lhs - rhs));
+            PriorityQueue<string, int> activeNodesQueue =
+                new PriorityQueue<string, int>(Comparer<int>.Create((lhs, rhs) => lhs - rhs));
             //var activeNodesQueue = new Queue<int, string>(lhs => lhs.Item1 < rhs.Item1);
             activeNodes["index"] = new HashSet<int>();
             if (headSha != null)
@@ -98,7 +115,7 @@ namespace GitRepoWrapper
                     if (children.Count > 0)
                     {
                         var childSha = children[0];
-                        var jChild = positions[childSha].J;
+                        var jChild = Positions[childSha].J;
                         j = InsertCommit(commitSha, jChild, forbiddenIndices, branches);
                     }
                     else
@@ -126,9 +143,12 @@ namespace GitRepoWrapper
                 SetCommitPosition(commitSha, i, j, repo);
                 ++i;
             }
+
+            UpdateIntervalTree(repo);
         }
 
-        private HashSet<int> GetForbiddenIndices(List<string> mergeChildren, Dictionary<string, HashSet<int>> activeNodes)
+        private HashSet<int> GetForbiddenIndices(List<string> mergeChildren,
+            Dictionary<string, HashSet<int>> activeNodes)
         {
             //Compute forbidden indices
             string? highestChild = null;
@@ -136,17 +156,19 @@ namespace GitRepoWrapper
 
             foreach (var childSha in mergeChildren)
             {
-                var iChild = positions[childSha].I;
+                var iChild = Positions[childSha].I;
                 if (iChild < iMin)
                 {
                     iMin = iChild;
                     highestChild = childSha;
                 }
             }
+
             return highestChild != null ? activeNodes[highestChild] : new HashSet<int>();
         }
 
-        private (string?, int) FindCommitToReplace(in string commitSha, string? headSha, List<string> branchChildren, HashSet<int> forbiddenIndices)
+        private (string?, int) FindCommitToReplace(in string commitSha, string? headSha, List<string> branchChildren,
+            HashSet<int> forbiddenIndices)
         {
             string? commitToReplace = null;
             int jCommitToReplace = int.MaxValue;
@@ -161,7 +183,7 @@ namespace GitRepoWrapper
                 //The commit can only replace a child whose first parent is this commit
                 foreach (var childSha in branchChildren)
                 {
-                    int jChild = positions[childSha].J; //?
+                    int jChild = Positions[childSha].J; //?
                     if (!forbiddenIndices.Contains(jChild) && jChild < jCommitToReplace)
                     {
                         commitToReplace = childSha;
@@ -169,10 +191,12 @@ namespace GitRepoWrapper
                     }
                 }
             }
+
             return (commitToReplace, jCommitToReplace);
         }
 
-        private int InsertCommit(in string commitSha, int j, HashSet<int> forbiddenIndices, List<string?> branches) //?? ref //j - 1
+        private int InsertCommit(in string commitSha, int j, HashSet<int> forbiddenIndices,
+            List<string?> branches) //?? ref //j - 1
         {
             //Try to insert as close as possible to i
             //replace i by j
@@ -189,6 +213,7 @@ namespace GitRepoWrapper
                     branches[j - dj] = commitSha;
                     return j - dj;
                 }
+
                 ++dj;
             }
 
@@ -197,7 +222,8 @@ namespace GitRepoWrapper
             return branches.Count - 1;
         }
 
-        private void RemoveUselessActiveNodes(ref PriorityQueue<string, int> activeNodesQueue, ref Dictionary<string, HashSet<int>> activeNodes, int i) //????????????
+        private void RemoveUselessActiveNodes(ref PriorityQueue<string, int> activeNodesQueue,
+            ref Dictionary<string, HashSet<int>> activeNodes, int i) //????????????
         {
             activeNodesQueue.TryPeek(out _, out var activeNodesI); //TODO: optimization
 
@@ -214,12 +240,13 @@ namespace GitRepoWrapper
             RepoWrapper repo) //? //smt goes wrong here
         {
             var jToAdd = new List<int>() { j };
-            jToAdd.AddRange(branchChildren.Select(childSha => positions[childSha].J));
+            jToAdd.AddRange(branchChildren.Select(childSha => Positions[childSha].J));
 
             foreach (var activeNode in activeNodes.Values)
             {
                 jToAdd.ForEach(jValue => activeNode.Add(jValue));
             }
+
             activeNodes[commitSha] = new HashSet<int>();
 
             int iRemove; //TODO: doesn`t work with the first commit, that doesn`t have a parent
@@ -231,25 +258,44 @@ namespace GitRepoWrapper
             {
                 return;
             }
+
             activeNodesQueue.Enqueue(commitSha, iRemove);
         }
 
-        private void RemoveChildrenFromActiveBranches(ref List<string?> branches, List<string> branchChildren, string? commitToReplace)
+        private void RemoveChildrenFromActiveBranches(ref List<string?> branches, List<string> branchChildren,
+            string? commitToReplace)
         {
             foreach (string? childSha in branchChildren)
             {
                 if (childSha != commitToReplace)
                 {
-                    branches[this.positions[childSha].J] = null; //?
+                    branches[this.Positions[childSha].J] = null; //?
                 }
             }
         }
 
         private void SetCommitPosition(in string commitSha, int i, int j, in RepoWrapper repo) //in?
         {
-            this.positions[commitSha] = new Node(i, j, repo.Stashes.ContainsKey(commitSha) ? NodeType.Stash : NodeType.Commit);
+            this.Positions[commitSha] =
+                new Node(i, j, repo.Stashes.ContainsKey(commitSha) ? NodeType.Stash : NodeType.Commit);
             //this.positions.Add(commitSha, new Node(i, j, repo.Stashes.ContainsKey(commitSha) ? NodeType.Stash : NodeType.Commit)); // this.positions.set(commitSha, [i, j, repo.stashes.has(commitSha) ? NodeType.Stash : NodeType.Commit]);
         }
 
+        private void UpdateIntervalTree(RepoWrapper repo)
+        {
+            this.Edges = new IntervalTree<int, Edge>();
+
+            foreach (var keyValuePair in this.Positions)
+            {
+                var parents = repo.Parents[keyValuePair.Key];
+                foreach (var parent in parents)
+                {
+                    int i = parents.IndexOf(parent);
+                    var parenPosition = this.Positions[parent];
+                    var newEdge = new Edge(keyValuePair.Value, parenPosition, i > 0 ? EdgeType.Merge : EdgeType.Normal);
+                    this.Edges.Add(keyValuePair.Value.I, parenPosition.I, newEdge);
+                }
+            }
+        }
     }
 }

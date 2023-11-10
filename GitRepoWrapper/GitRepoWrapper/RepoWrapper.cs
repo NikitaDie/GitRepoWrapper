@@ -1,4 +1,5 @@
 ﻿using LibGit2Sharp;
+using IntervalTree;
 
 namespace GitRepoWrapper
 {
