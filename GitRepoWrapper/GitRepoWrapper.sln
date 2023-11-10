@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GitRepoWrapper", "GitRepoWrapper\GitRepoWrapper.csproj", "{EE4F185B-F027-4428-AE7F-ED594CCE93BE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EE4F185B-F027-4428-AE7F-ED594CCE93BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EE4F185B-F027-4428-AE7F-ED594CCE93BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EE4F185B-F027-4428-AE7F-ED594CCE93BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EE4F185B-F027-4428-AE7F-ED594CCE93BE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DBBA7798-FE58-4985-A176-75E9DA21C340}
+	EndGlobalSection
+EndGlobal
