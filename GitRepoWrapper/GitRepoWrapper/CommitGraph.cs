@@ -55,13 +55,13 @@ namespace GitRepoWrapper
     public class CommitGraph
     {
         public Dictionary<string, Node> Positions { get; set; }
-        //private int width;
+        public int Width { get; set; }
         public IntervalTree<int, Edge> Edges { get; set; }
 
         public CommitGraph()
         {
             this.Positions = new Dictionary<string, Node>();
-            //this.width = 0;
+            Width = 0;
             this.Edges = new IntervalTree<int, Edge>(); //TODO: unnecessary initialisation
         }
 
@@ -73,7 +73,7 @@ namespace GitRepoWrapper
             int i = 0;
             List<string?> branches = new List<string?>()
             {
-                /* "index" */
+                 "index"
             };
             var activeNodes = new Dictionary<string, HashSet<int>>();
             PriorityQueue<string, int> activeNodesQueue =
@@ -93,10 +93,10 @@ namespace GitRepoWrapper
                 var branchChildren = children.Where(childSha => repo.Parents[childSha][0] == commitSha).ToList();
                 var mergeChildren = children.Where(childSha => repo.Parents[childSha][0] != commitSha).ToList();
 
-                if (commitSha == "6e5e1a96daf3ceeca21bd6f31fbcc8e41ed387e4")
-                {
-                    j = -1;
-                }
+                //if (commitSha == "6e5e1a96daf3ceeca21bd6f31fbcc8e41ed387e4")
+                //{
+                //    j = -1;
+                //}
 
                 //Compute forbidden indices
                 var forbiddenIndices = GetForbiddenIndices(mergeChildren, activeNodes); //+
@@ -144,6 +144,7 @@ namespace GitRepoWrapper
                 ++i;
             }
 
+            Width = branches.Count;
             UpdateIntervalTree(repo);
         }
 

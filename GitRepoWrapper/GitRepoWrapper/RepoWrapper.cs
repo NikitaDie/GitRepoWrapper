@@ -33,8 +33,8 @@ namespace GitRepoWrapper
 
     public class RepoWrapper
     {
-        private Repository Repo { get; set; }
-        private string Path { get; set; }
+        public Repository Repo { get; private set; }
+        public string Path { get; private set; }
         public string Name { get; set; }
         public List<Commit> Commits { get; set; }
         public Dictionary<string, Commit> ShaToCommit { get; set; } //private
